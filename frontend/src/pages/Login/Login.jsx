@@ -5,29 +5,30 @@ import {
   IoEyeOutline,
   IoEyeOffOutline,
 } from "react-icons/io5";
+import { login } from "../../services/api.js";
 import "./Login.css";
 
-function Login({ usuarios, onLogin }) {
+function Login({ onLogin }) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [erro, setErro] = useState("");
+  const [entrando, setEntrando] = useState(false);
   const navigate = useNavigate();
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setErro("");
-    // Autenticação SIMULADA: comparação direta com o JSON local.
-    // (No mundo real, isto é feito no backend, com senha "hasheada".)
-    const usuario = usuarios.find(
-      (u) => u.email === email && u.senha === senha,
-    );
-    if (!usuario) {
-      setErro("E-mail ou senha inválidos.");
-      return;
+    setEntrando(true);
+    try {
+      const usuario = await login(email, senha);
+      onLogin(usuario);
+      navigate("/home");
+    } catch (err) {
+      setErro(err.message);
+    } finally {
+      setEntrando(false);
     }
-    onLogin(usuario);
-    navigate("/home");
   }
 
   return (
@@ -90,8 +91,8 @@ function Login({ usuarios, onLogin }) {
 
           {erro && <p className="erro">{erro}</p>}
 
-          <button type="submit" className="btn-primary">
-            Entrar
+          <button type="submit" className="btn-primary" disabled={entrando}>
+            {entrando ? "Entrando..." : "Entrar"}
           </button>
         </form>
 

@@ -5,6 +5,7 @@ import {
   IoEyeOutline,
   IoEyeOffOutline,
 } from "react-icons/io5";
+import { cadastrarUsuario } from "../../services/api.js";
 import "./Cadastro.css";
 
 function calcularForcaSenha(senha) {
@@ -16,17 +17,18 @@ function calcularForcaSenha(senha) {
   return forca;
 }
 
-function Cadastro({ usuarios, onCadastrar }) {
+function Cadastro() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [erro, setErro] = useState("");
+  const [enviando, setEnviando] = useState(false);
   const navigate = useNavigate();
 
   const forcaSenha = calcularForcaSenha(senha);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setErro("");
     if (!nome || !email || !senha) {
@@ -37,12 +39,17 @@ function Cadastro({ usuarios, onCadastrar }) {
       setErro("A senha deve ter no mínimo 8 caracteres.");
       return;
     }
-    if (usuarios.some((u) => u.email === email)) {
-      setErro("Este e-mail já está cadastrado.");
-      return;
+    setEnviando(true);
+    try {
+      // Verificação de e-mail único agora é feita pelo backend
+      // (retorna 409 se o e-mail já existir).
+      await cadastrarUsuario({ nome, email, senha });
+      navigate("/login");
+    } catch (err) {
+      setErro(err.message);
+    } finally {
+      setEnviando(false);
     }
-    onCadastrar({ nome, email, senha });
-    navigate("/login");
   }
 
   return (
@@ -124,8 +131,8 @@ function Cadastro({ usuarios, onCadastrar }) {
 
           {erro && <p className="erro">{erro}</p>}
 
-          <button type="submit" className="btn-primary">
-            Criar conta
+          <button type="submit" className="btn-primary" disabled={enviando}>
+            {enviando ? "Criando conta..." : "Criar conta"}
           </button>
         </form>
 
